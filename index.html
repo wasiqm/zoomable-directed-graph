@@ -52,7 +52,7 @@ svg.append('defs').append('marker')
 
 var g = svg.append("g");
 
-d3.json("data.json", function (error, graph) {
+d3.json("data2.json", function (error, graph) {
     if (error) throw error;
 
 	links = graph.links;
@@ -126,6 +126,7 @@ d3.json("data.json", function (error, graph) {
 
 	node.append("text")
 		.attrs({
+		    'id' : 'label',
 			'font-size': 10,
 			'font-family': 'arial',
 			'font-weight': 'bold',
@@ -137,6 +138,7 @@ d3.json("data.json", function (error, graph) {
 
 	node.append("text")
 		.attrs({
+		    'id' : 'name',
 			'font-size': 10,
 			'font-family': 'arial',
 			'font-weight': 'bold',
@@ -160,7 +162,52 @@ function clicked(d) {
     y = (bounds[0][1] + bounds[1][1]) / 2,
     scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
     translate = [width / 2 - scale * x, height / 2 - scale * y];
-    console.log([width / 2 - scale * x, height / 2 - scale * y])
+
+    d3.select(active["_groups"][0][0]["children"]["label"])
+        .transition()
+            .attr("transform", "translate(0, -19)")
+            .duration(750)
+        //.attr("font-size", 8);
+
+    d3.select(active["_groups"][0][0]["children"]["name"])
+        .transition()
+            .attr("transform", "translate(0, -19)")
+            .duration(750)
+        //.attr("font-size", 8);
+
+    active.append("text")
+        .attrs({
+            'id' : 'country',
+            'font-size': 8,
+            'font-family': 'arial',
+            'font-weight': 'bold',
+            'text-anchor': 'middle',
+            'fill': '#4d4e51',
+            'dy': '1em',
+            'opacity': 0
+        })
+        .text(function(d) { return "country: " + d.country; })
+        .transition()
+            .delay(75)
+            .duration(500)
+            .attr("opacity", 1);
+
+    active.append("text")
+        .attrs({
+            'id' : 'risk',
+            'font-size': 8,
+            'font-family': 'arial',
+            'font-weight': 'bold',
+            'text-anchor': 'middle',
+            'fill': '#4d4e51',
+            'dy': '2em',
+            'opacity': 0
+        })
+        .text(function(d) { return "risk: " + d.risk; })
+        .transition()
+            .delay(75)
+            .duration(500)
+            .attr("opacity", 1);
 
     svg.transition()
       .duration(750)
@@ -169,7 +216,35 @@ function clicked(d) {
 }
 
 function reset() {
-  active.classed("active", false);
+    active.classed("active", false);
+
+    d3.select('#country')
+        .transition()
+            .delay(75)
+            .duration(500)
+            .attr("opacity", 0)
+        .remove();
+
+    d3.select('#risk')
+        .transition()
+            .delay(75)
+            .duration(500)
+            .attr("opacity", 0)
+        .remove();
+
+    d3.select(active["_groups"][0][0]["children"]["label"])
+        //.attr("font-size", 10)
+        .transition()
+            .attr("transform", "translate(0, 0)")
+            .duration(750);
+
+    d3.select(active["_groups"][0][0]["children"]["name"])
+        //.attr("font-size", 10)
+        .transition()
+            .attr("transform", "translate(0, 0)")
+            .duration(750);
+
+
   active = d3.select(null);
 
   svg.transition()
