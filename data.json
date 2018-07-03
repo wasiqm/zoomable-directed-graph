@@ -1,0 +1,63 @@
+{
+  "nodes": [
+    {
+      "name": "Wasiq",
+      "label": "Customer A",
+      "id": 1,
+      "group": 1,
+      "country": "CA",
+      "risk": "low"
+    },
+    {
+      "name": "Goldman Sachs",
+      "label": "Bank A",
+      "id": 2,
+      "group": 2,
+      "country": "USA",
+      "risk": "low"
+    },
+    {
+      "label": "Ordering Bank",
+      "id": 3,
+      "group": 2,
+      "country": "UAE",
+      "risk": "medium"
+    },
+    {
+      "name": "HSBC",
+      "label": "Acct w/ Bank",
+      "id": 6,
+      "group": 2,
+      "country": "UK",
+      "risk": "low"
+    },
+    {
+      "name": "Syed",
+      "label": "Customer B",
+      "id": 7,
+      "group": 1,
+      "country": "CA",
+      "risk": "low"
+    }
+  ],
+
+  "links": [
+    {
+      "source": 1,
+      "target": 2,
+      "value": "$100"
+    },
+    {
+      "source": 2,
+      "target": 3
+    },
+    {
+    "source": 3,
+    "target": 6
+    },
+    {
+      "source": 6,
+      "target": 7
+    }
+  ]
+}

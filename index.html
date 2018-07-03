@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+.link {
+  stroke: #999;
+  stroke-opacity: 0.55;
+  stroke-width: 5px;
+}
+.node {
+    cursor: pointer;
+}
+</style>
+<body>
+<script src="https://d3js.org/d3.v4.min.js" type="text/javascript"></script>
+<script src="https://d3js.org/d3-selection-multi.v1.js"></script>
+<script>
+
+var width = 960,
+    height = 600,
+    r = 50,
+    active = d3.select(null);
+
+var zoom = d3.zoom()
+    .scaleExtent([1, 8])
+    .on("zoom", zoomed);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .on("click", stopped, true);
+
+var margin = 20,
+    diameter = +svg.attr("width")
+
+var colours = d3.scaleLinear()
+    .domain([-1, 5])
+    .range(["hsl(152,80%,80%)", "hsl(228,30%,40%)"])
+    .interpolate(d3.interpolateHcl);
+svg.append('defs').append('marker')
+        .attrs({'id':'arrowhead',
+            'viewBox':'-0 -5 10 10',
+            'refX':34,
+            'refY':0,
+            'orient':'auto',
+            'markerWidth':4,
+            'markerHeight':4,
+            'xoverflow':'visible'})
+        .append('svg:path')
+        .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
+        .attr('fill', '#999')
+        .style('stroke','none');
+
+var g = svg.append("g");
+
+d3.json("data.json", function (error, graph) {
+    if (error) throw error;
+
+	links = graph.links;
+	nodes = graph.nodes;
+
+	g.selectAll(".link")
+		.data(links)
+		.enter()
+		.append("line")
+		.attrs({
+			'class': 'link',
+			'marker-end':'url(#arrowhead)',
+			'x1': function (d, i) {return ((1 + i) * svg.attr("width") / nodes.length) - 55},
+			'y1': svg.attr("height") / 2,
+			'x2': function (d, i) {return ((2 + i) * svg.attr("width") / nodes.length) - 55},
+			'y2': svg.attr("height") / 2
+		})
+	    .append("title")
+		.text(function (d) {return d.type;});
+
+	g.selectAll(".edgepath")
+		.data(links)
+		.enter()
+		.append('path')
+		.attrs({
+			'class': 'edgepath',
+			'fill-opacity': 50,
+			'stroke-opacity': 50,
+			'id': function (d, i) {return 'edgepath' + i}
+		})
+		.style("pointer-events", "none");
+
+	g.selectAll(".edgelabel")
+		.data(links)
+		.enter()
+		.append('text')
+		.style("pointer-events", "none")
+		.attrs({
+			'class': 'edgelabel',
+			'id': function (d, i) {return 'edgelabel' + i},
+			'font-size': 10,
+			'font-family': 'arial',
+			'fill': '#aaa',
+			'dy': -4
+		})
+        .append('textPath')
+		.attr('xlink:href', function (d, i) {return '#edgepath' + i})
+		.style("text-anchor", "middle")
+		.style("pointer-events", "none")
+		.attr("startOffset", "50%")
+		.text(function (d) {return d.value});
+
+	node = g.selectAll(".node")
+		.data(nodes)
+		.enter()
+		.append("g")
+		.attr("class", "node")
+		.attr("transform", function(d, i) {
+			d.x = ((1 + i) * svg.attr("width") / nodes.length) - 55,
+			d.y = svg.attr("height") / 2,
+			d.r = r;
+			return "translate(" + d.x + "," + d.y + ")";
+		})
+		.on("click", clicked);
+
+	node.append("circle")
+		.attr("r", r)
+		.attr("class", "node")
+		.style("fill", function(d) { return colours(d.group); })
+		.style("stroke", function(d) { return d3.rgb(colours(d.group)).darker(); })
+
+	node.append("text")
+		.attrs({
+			'font-size': 10,
+			'font-family': 'arial',
+			'font-weight': 'bold',
+			'text-anchor': 'middle',
+			'fill': '#000000',
+			'dy': '-0.5em'
+		})
+		.text(function(d) { return d.label; });
+
+	node.append("text")
+		.attrs({
+			'font-size': 10,
+			'font-family': 'arial',
+			'font-weight': 'bold',
+			'text-anchor': 'middle',
+			'fill': '#000000',
+			'dy': '0.6em'
+		})
+		.text(function(d) { return d.name; });
+
+});
+
+function clicked(d) {
+    if (active.node() === this) return reset();
+    active.classed("active", false);
+    active = d3.select(this);
+
+    var bounds = [[d.x - r, d.y - r], [d.x + r, d.y + r]],
+    dx = bounds[1][0] - bounds[0][0],
+    dy = bounds[1][1] - bounds[0][1],
+    x = (bounds[0][0] + bounds[1][0]) / 2,
+    y = (bounds[0][1] + bounds[1][1]) / 2,
+    scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
+    translate = [width / 2 - scale * x, height / 2 - scale * y];
+    console.log([width / 2 - scale * x, height / 2 - scale * y])
+
+    svg.transition()
+      .duration(750)
+      // .style("stroke-width", 1.5 / scale + "px")
+      .call( zoom.transform, d3.zoomIdentity.translate(translate[0],translate[1]).scale(scale) );
+}
+
+function reset() {
+  active.classed("active", false);
+  active = d3.select(null);
+
+  svg.transition()
+      .duration(750)
+      // .call( zoom.transform, d3.zoomIdentity.translate(0, 0).scale(1) ); // not in d3 v4
+      .call( zoom.transform, d3.zoomIdentity ); // updated for d3 v4
+}
+
+function zoomed() {
+  g.style("stroke-width", 1.5 / d3.event.transform.k + "px");
+  // g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")"); // not in d3 v4
+  g.attr("transform", d3.event.transform); // updated for d3 v4
+}
+
+// If the drag behavior prevents the default click,
+// also stop propagation so we don’t click-to-zoom.
+function stopped() {
+  if (d3.event.defaultPrevented) d3.event.stopPropagation();
+}
+
+</script>
